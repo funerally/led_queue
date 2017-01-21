@@ -20,6 +20,7 @@
 static QUEUE_TYPE	queue[ARRAY_SIZE];
 static size_t	front = 1;
 static size_t	rear = 0;
+int count;
 
 
 void insert(QUEUE_TYPE value) {
@@ -94,6 +95,26 @@ void init_GPIO() {
     	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x01;
     	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
     	NVIC_Init(&NVIC_InitStruct);
+
+    	//Use PA2 for EXTI_Line2
+		SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource2);
+		//PA2 connected to EXTI_Line2
+		EXTI_InitStruct.EXTI_Line = EXTI_Line2;
+		//Enable interrupt
+		EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+		//Interrupt mode
+		EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+		//Triggers on rising/falling edge
+		EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
+		//Add to EXTI
+		EXTI_Init(&EXTI_InitStruct);
+	
+		//Add IRQ vector to NVIC
+		NVIC_InitStruct.NVIC_IRQChannel = EXTI2_IRQn;
+    	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x0;
+    	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x01;
+    	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    	NVIC_Init(&NVIC_InitStruct);
 }
 
 //PA0 interrupt handler
@@ -109,8 +130,22 @@ void EXTI0_IRQHandler(void){
 
 }
 
+//PA2 interrupt handler
+void EXTI2_IRQHandler(void){
+
+	if(!!EXTI_GetITStatus(EXTI_Line2) == 1){
+		
+		
+		EXTI_ClearITPendingBit(EXTI_Line2);
+		
+		
+	}
+
+}
+
 int main(void) {
 	init_GPIO();
+	
 	//insert(1);
 	
 	// LEDs set when User Button on, LEDs reset when User Button off
